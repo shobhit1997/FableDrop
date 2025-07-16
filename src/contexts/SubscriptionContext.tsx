@@ -30,6 +30,7 @@ interface SubscriptionContextType {
   getNextOrderDate: () => Date | null;
   refreshBooks: () => Promise<void>;
   getBooksByGenre: (genre: string) => Book[];
+  clearError: () => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
@@ -239,7 +240,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const startDate = new Date();
       const endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + 12);
+      endDate.setMonth(endDate.getMonth() + 6); // Changed from 12 to 6 months
 
       const newSubscription: Subscription = {
         id: `sub_${Date.now()}`,
@@ -247,7 +248,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
         status: "active",
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
-        monthsRemaining: 12,
+        monthsRemaining: 6, // Changed from 12 to 6 months
         preferences,
         giftMessage,
       };
@@ -292,6 +293,20 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (!subscription) {
         throw new Error("No active subscription found");
+      }
+
+      // Check if user has reached the 6-book limit
+      if (orders.length >= 6) {
+        throw new Error(
+          "You have reached the maximum of 6 books for your subscription period."
+        );
+      }
+
+      // Check if user can order this month (1 book per month limit)
+      if (!canOrderThisMonth()) {
+        throw new Error(
+          "You can only order 1 book per month. Please wait until next month to order another book."
+        );
       }
 
       const currentMonth = new Date().getMonth() + 1;
@@ -355,7 +370,12 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
       await sendOrderEmail(newOrder, user?.email || "");
     } catch (err) {
       console.error("Error ordering book:", err);
-      setError("Failed to order book. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to order book. Please try again."
+      );
+      throw err; // Re-throw to handle in UI
     } finally {
       setLoading(false);
     }
@@ -378,6 +398,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!subscription || subscription.status !== "active") return false;
     if (subscription.monthsRemaining <= 0) return false;
 
+    // Check if user has reached the 6-book limit
+    if (orders.length >= 6) return false;
+
+    // Check if user has already ordered a book this month (1 book per month limit)
     const currentMonthOrders = getOrdersForCurrentMonth();
     return currentMonthOrders.length === 0;
   };
@@ -400,6 +424,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
     return nextMonth;
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   const value = {
     subscription,
     orders,
@@ -415,6 +443,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
     getNextOrderDate,
     refreshBooks,
     getBooksByGenre,
+    clearError,
   };
 
   return (

@@ -153,7 +153,7 @@ const DashboardPage: React.FC = () => {
                     Total books:
                   </span>
                   <span className="font-medium text-[#2C3E50]">
-                    {orders.length} / 12
+                    {orders.length} / 6
                   </span>
                 </div>
               </div>
@@ -248,18 +248,18 @@ const DashboardPage: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <Link
-                  to="/order"
-                  className={`block w-full text-center py-2 px-4 rounded-lg transition-colors font-serif ${
-                    canOrderThisMonth()
-                      ? "bg-[#F4A261]/20 text-[#8B4513] hover:bg-[#F4A261]/30"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {canOrderThisMonth()
-                    ? "📖 Choose Book"
-                    : "📅 Order Unavailable"}
-                </Link>
+                {canOrderThisMonth() ? (
+                  <Link
+                    to="/order"
+                    className="block w-full text-center py-2 px-4 rounded-lg transition-colors font-serif bg-[#F4A261]/20 text-[#8B4513] hover:bg-[#F4A261]/30"
+                  >
+                    📖 Choose Book
+                  </Link>
+                ) : (
+                  <div className="block w-full text-center py-2 px-4 rounded-lg font-serif bg-gray-100 text-gray-400 cursor-not-allowed">
+                    📅 Order Unavailable
+                  </div>
+                )}
 
                 <Link
                   to="/subscription"
@@ -271,6 +271,9 @@ const DashboardPage: React.FC = () => {
                 <div className="pt-2 border-t border-[#F4A261]/30">
                   <p className="text-xs text-[#5D4037] font-serif italic">
                     💡 Tip: You choose your own books from our vast collection!
+                  </p>
+                  <p className="text-xs text-[#5D4037] font-serif italic mt-1">
+                    📅 Limit: 1 book per month, maximum 6 books total
                   </p>
                 </div>
               </div>

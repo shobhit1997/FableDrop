@@ -477,7 +477,7 @@ export class GoogleSheetsService {
             id: row[1],
             startDate: row[2],
             endDate: row[3],
-            monthsRemaining: parseInt(row[4]) || 12,
+            monthsRemaining: parseInt(row[4]) || 6, // Changed default from 12 to 6
             status: row[5],
             preferences: JSON.parse(row[6] || "{}"),
             giftMessage: row[7],

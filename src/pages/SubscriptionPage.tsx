@@ -7,21 +7,43 @@ import { Book } from "../types";
 
 const SubscriptionPage: React.FC = () => {
   const { user, logout } = useAuth();
-  const { subscription, createSubscription, orderBook, loading, error } =
-    useSubscription();
+  const {
+    subscription,
+    createSubscription,
+    orderBook,
+    loading,
+    error,
+    clearError,
+    canOrderThisMonth,
+    orders,
+  } = useSubscription();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [titleQuery, setTitleQuery] = useState("");
+  const [authorQuery, setAuthorQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Book[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [personalMessage, setPersonalMessage] = useState("");
   const [showOrderModal, setShowOrderModal] = useState(false);
 
-  const handleSearch = async (query: string) => {
-    if (!query.trim()) {
+  const handleSearch = async () => {
+    const titleTerm = titleQuery.trim();
+    const authorTerm = authorQuery.trim();
+
+    if (!titleTerm && !authorTerm) {
       setSearchResults([]);
       return;
+    }
+
+    // Build search query
+    let query = "";
+    if (titleTerm && authorTerm) {
+      query = `intitle:"${titleTerm}" inauthor:"${authorTerm}"`;
+    } else if (titleTerm) {
+      query = `intitle:"${titleTerm}"`;
+    } else if (authorTerm) {
+      query = `inauthor:"${authorTerm}"`;
     }
 
     setIsSearching(true);
@@ -40,11 +62,12 @@ const SubscriptionPage: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSearch(searchQuery);
+    handleSearch();
   };
 
   const clearSearch = () => {
-    setSearchQuery("");
+    setTitleQuery("");
+    setAuthorQuery("");
     setSearchResults([]);
   };
 
@@ -64,6 +87,7 @@ const SubscriptionPage: React.FC = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("Order failed:", err);
+      // Error is already set in the context, modal will stay open to show the error
     }
   };
 
@@ -71,6 +95,7 @@ const SubscriptionPage: React.FC = () => {
     setShowOrderModal(false);
     setSelectedBook(null);
     setPersonalMessage("");
+    clearError(); // Clear any errors when closing modal
   };
 
   const handleCreateSubscription = async () => {
@@ -180,7 +205,7 @@ const SubscriptionPage: React.FC = () => {
                     Months Remaining
                   </label>
                   <p className="text-[#2C3E50] font-semibold text-[#F4A261]">
-                    {subscription.monthsRemaining} of 12
+                    {subscription.monthsRemaining} of 6
                   </p>
                 </div>
               </div>
@@ -247,53 +272,75 @@ const SubscriptionPage: React.FC = () => {
           <h2 className="text-xl font-serif font-semibold text-[#2C3E50] mb-4">
             Search for Books
           </h2>
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex gap-4 items-center"
-          >
-            <div className="flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by title, author, genre, or ISBN..."
-                className="w-full px-4 py-3 border border-[#F4A261]/30 rounded-lg focus:ring-2 focus:ring-[#F4A261] focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm font-serif"
-              />
+          <form onSubmit={handleSearchSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#2C3E50] font-serif mb-2">
+                  Book Title
+                </label>
+                <input
+                  type="text"
+                  value={titleQuery}
+                  onChange={(e) => setTitleQuery(e.target.value)}
+                  placeholder="Enter book title..."
+                  className="w-full px-4 py-3 border border-[#F4A261]/30 rounded-lg focus:ring-2 focus:ring-[#F4A261] focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm font-serif"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2C3E50] font-serif mb-2">
+                  Author Name
+                </label>
+                <input
+                  type="text"
+                  value={authorQuery}
+                  onChange={(e) => setAuthorQuery(e.target.value)}
+                  placeholder="Enter author name..."
+                  className="w-full px-4 py-3 border border-[#F4A261]/30 rounded-lg focus:ring-2 focus:ring-[#F4A261] focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm font-serif"
+                />
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={isSearching}
-              className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
-            >
-              {isSearching ? (
-                <div className="flex items-center">
-                  <LoadingSpinner size="small" color="white" />
-                  <span className="ml-2">Searching...</span>
-                </div>
-              ) : (
-                "Search"
+            <div className="flex items-center gap-4">
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
+              >
+                {isSearching ? (
+                  <div className="flex items-center">
+                    <LoadingSpinner size="small" color="white" />
+                    <span className="ml-2">Searching...</span>
+                  </div>
+                ) : (
+                  "Search Books"
+                )}
+              </button>
+              {(titleQuery || authorQuery) && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="text-sm text-[#8B4513] hover:text-[#A0522D] transition-colors font-serif underline"
+                >
+                  Clear Search
+                </button>
               )}
-            </button>
+            </div>
           </form>
 
-          {searchQuery && (
-            <div className="mt-4 flex items-center justify-between">
+          {(titleQuery || authorQuery) && (
+            <div className="mt-4">
               <p className="text-sm text-[#5D4037] font-serif">
                 {isSearching ? (
                   "Searching through our vast library..."
                 ) : (
                   <>
-                    Found {searchResults.length} books for "{searchQuery}"
+                    Found {searchResults.length} books
+                    {titleQuery && ` for title "${titleQuery}"`}
+                    {titleQuery && authorQuery && " and"}
+                    {authorQuery && ` by author "${authorQuery}"`}
                     {searchResults.length === 0 && " - Try different keywords"}
                   </>
                 )}
               </p>
-              <button
-                onClick={clearSearch}
-                className="text-sm text-[#8B4513] hover:text-[#A0522D] transition-colors font-serif"
-              >
-                Clear Search
-              </button>
             </div>
           )}
         </div>
@@ -306,23 +353,25 @@ const SubscriptionPage: React.FC = () => {
         )}
 
         {/* No Results Message */}
-        {searchQuery && searchResults.length === 0 && !isSearching && (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📚</div>
-            <h3 className="text-xl font-serif font-semibold text-[#F6F1EB] mb-2">
-              No books found for your search
-            </h3>
-            <p className="text-[#F6F1EB]/90 font-serif mb-6">
-              Try different keywords or browse our curated collections
-            </p>
-            <button
-              onClick={clearSearch}
-              className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-[#F4A261]/30"
-            >
-              Clear Search
-            </button>
-          </div>
-        )}
+        {(titleQuery || authorQuery) &&
+          searchResults.length === 0 &&
+          !isSearching && (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-xl font-serif font-semibold text-[#F6F1EB] mb-2">
+                No books found for your search
+              </h3>
+              <p className="text-[#F6F1EB]/90 font-serif mb-6">
+                Try different keywords or browse our curated collections
+              </p>
+              <button
+                onClick={clearSearch}
+                className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-[#F4A261]/30"
+              >
+                Clear Search
+              </button>
+            </div>
+          )}
 
         {/* Book Grid */}
         {searchResults.length > 0 && (
@@ -373,16 +422,20 @@ const SubscriptionPage: React.FC = () => {
 
                   <button
                     onClick={() => handleBookSelect(book)}
-                    disabled={!subscription}
+                    disabled={!subscription || !canOrderThisMonth()}
                     className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors font-serif ${
-                      subscription
+                      subscription && canOrderThisMonth()
                         ? "bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] hover:from-[#A0522D] hover:to-[#8B4513] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }`}
                   >
-                    {subscription
-                      ? "Choose This Book"
-                      : "Create Subscription First"}
+                    {!subscription
+                      ? "Create Subscription First"
+                      : !canOrderThisMonth()
+                      ? orders.length >= 6
+                        ? "Subscription Limit Reached"
+                        : "Already Ordered This Month"
+                      : "Choose This Book"}
                   </button>
                 </div>
               </div>
@@ -438,7 +491,17 @@ const SubscriptionPage: React.FC = () => {
                     placeholder="Add a personal note for your reading journey..."
                     className="w-full px-3 py-2 border border-[#F4A261]/30 rounded-lg focus:ring-2 focus:ring-[#F4A261] focus:border-transparent resize-none h-24 bg-white/50 backdrop-blur-sm font-serif"
                   />
+                  <p className="text-xs text-[#5D4037] font-serif mt-1">
+                    📅 Remember: You can choose 1 book per month (maximum 6
+                    books total for your 6-month subscription)
+                  </p>
                 </div>
+
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm font-serif">{error}</p>
+                  </div>
+                )}
 
                 <div className="flex space-x-3">
                   <button

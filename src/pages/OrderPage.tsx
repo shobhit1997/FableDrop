@@ -7,10 +7,19 @@ import { Book } from "../types";
 
 const OrderPage: React.FC = () => {
   const { user, logout } = useAuth();
-  const { subscription, orderBook, loading } = useSubscription();
+  const {
+    subscription,
+    orderBook,
+    loading,
+    error,
+    clearError,
+    canOrderThisMonth,
+    orders,
+  } = useSubscription();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [titleQuery, setTitleQuery] = useState("");
+  const [authorQuery, setAuthorQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Book[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -33,10 +42,23 @@ const OrderPage: React.FC = () => {
       Math.floor(Math.random() * inspirationalMessages.length)
     ];
 
-  const handleSearch = async (query: string) => {
-    if (!query.trim()) {
+  const handleSearch = async () => {
+    const titleTerm = titleQuery.trim();
+    const authorTerm = authorQuery.trim();
+
+    if (!titleTerm && !authorTerm) {
       setSearchResults([]);
       return;
+    }
+
+    // Build search query
+    let query = "";
+    if (titleTerm && authorTerm) {
+      query = `intitle:"${titleTerm}" inauthor:"${authorTerm}"`;
+    } else if (titleTerm) {
+      query = `intitle:"${titleTerm}"`;
+    } else if (authorTerm) {
+      query = `inauthor:"${authorTerm}"`;
     }
 
     setIsSearching(true);
@@ -55,7 +77,7 @@ const OrderPage: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSearch(searchQuery);
+    handleSearch();
   };
 
   const handleBookSelect = (book: Book) => {
@@ -74,6 +96,7 @@ const OrderPage: React.FC = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("Order failed:", err);
+      // Error is already set in the context, modal will stay open to show the error
     }
   };
 
@@ -81,6 +104,7 @@ const OrderPage: React.FC = () => {
     setShowOrderModal(false);
     setSelectedBook(null);
     setPersonalMessage("");
+    clearError(); // Clear any errors when closing modal
   };
 
   if (!subscription) {
@@ -165,27 +189,61 @@ const OrderPage: React.FC = () => {
 
           {/* Search Bar */}
           <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for books by title, author, or genre..."
-                className="w-full px-6 py-4 text-lg border-2 border-[#F4A261]/30 rounded-full focus:ring-2 focus:ring-[#F4A261] focus:border-[#F4A261] transition-all duration-300 bg-[#F6F1EB]/90 backdrop-blur-sm font-serif text-[#2C3E50] placeholder-[#8B4513]/70"
-              />
-              <button
-                type="submit"
-                disabled={isSearching}
-                className="absolute right-2 top-2 bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] px-8 py-2 rounded-full hover:from-[#A0522D] hover:to-[#8B4513] disabled:opacity-50 font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                {isSearching ? "Searching..." : "Search"}
-              </button>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#F6F1EB]/90 font-serif mb-2">
+                    Book Title
+                  </label>
+                  <input
+                    type="text"
+                    value={titleQuery}
+                    onChange={(e) => setTitleQuery(e.target.value)}
+                    placeholder="Enter book title..."
+                    className="w-full px-4 py-3 text-lg border-2 border-[#F4A261]/30 rounded-lg focus:ring-2 focus:ring-[#F4A261] focus:border-[#F4A261] transition-all duration-300 bg-[#F6F1EB]/90 backdrop-blur-sm font-serif text-[#2C3E50] placeholder-[#8B4513]/70"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#F6F1EB]/90 font-serif mb-2">
+                    Author Name
+                  </label>
+                  <input
+                    type="text"
+                    value={authorQuery}
+                    onChange={(e) => setAuthorQuery(e.target.value)}
+                    placeholder="Enter author name..."
+                    className="w-full px-4 py-3 text-lg border-2 border-[#F4A261]/30 rounded-lg focus:ring-2 focus:ring-[#F4A261] focus:border-[#F4A261] transition-all duration-300 bg-[#F6F1EB]/90 backdrop-blur-sm font-serif text-[#2C3E50] placeholder-[#8B4513]/70"
+                  />
+                </div>
+              </div>
+              <div className="text-center">
+                <button
+                  type="submit"
+                  disabled={isSearching}
+                  className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] px-8 py-3 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] disabled:opacity-50 font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  {isSearching ? "Searching..." : "Search Books"}
+                </button>
+                {(titleQuery || authorQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTitleQuery("");
+                      setAuthorQuery("");
+                      setSearchResults([]);
+                    }}
+                    className="ml-4 text-[#F6F1EB]/90 hover:text-[#F4A261] transition-colors font-serif underline"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </div>
 
         {/* Search Results */}
-        {searchQuery && (
+        {(titleQuery || authorQuery) && (
           <div className="mt-12">
             <div className="text-center mb-8">
               <p className="text-[#F6F1EB]/90 font-serif text-lg">
@@ -196,7 +254,10 @@ const OrderPage: React.FC = () => {
                   </span>
                 ) : (
                   <>
-                    Found {searchResults.length} books for "{searchQuery}"
+                    Found {searchResults.length} books
+                    {titleQuery && ` for title "${titleQuery}"`}
+                    {titleQuery && authorQuery && " and"}
+                    {authorQuery && ` by author "${authorQuery}"`}
                     {searchResults.length === 0 && " - Try different keywords"}
                   </>
                 )}
@@ -204,26 +265,29 @@ const OrderPage: React.FC = () => {
             </div>
 
             {/* No Results Message */}
-            {searchQuery && searchResults.length === 0 && !isSearching && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-2xl font-serif font-semibold text-[#F6F1EB] mb-4">
-                  No books found
-                </h3>
-                <p className="text-[#F6F1EB]/90 font-serif mb-6">
-                  Try different keywords or check your spelling
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSearchResults([]);
-                  }}
-                  className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-[#F4A261]/30"
-                >
-                  Clear Search
-                </button>
-              </div>
-            )}
+            {(titleQuery || authorQuery) &&
+              searchResults.length === 0 &&
+              !isSearching && (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-2xl font-serif font-semibold text-[#F6F1EB] mb-4">
+                    No books found
+                  </h3>
+                  <p className="text-[#F6F1EB]/90 font-serif mb-6">
+                    Try different keywords or check your spelling
+                  </p>
+                  <button
+                    onClick={() => {
+                      setTitleQuery("");
+                      setAuthorQuery("");
+                      setSearchResults([]);
+                    }}
+                    className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-[#F4A261]/30"
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              )}
 
             {/* Book Grid */}
             {searchResults.length > 0 && (
@@ -274,9 +338,18 @@ const OrderPage: React.FC = () => {
 
                       <button
                         onClick={() => handleBookSelect(book)}
-                        className="w-full bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] py-3 px-4 rounded-lg font-medium hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        disabled={!canOrderThisMonth()}
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                          canOrderThisMonth()
+                            ? "bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] hover:from-[#A0522D] hover:to-[#8B4513]"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
                       >
-                        Choose This Book
+                        {canOrderThisMonth()
+                          ? "Choose This Book"
+                          : orders.length >= 6
+                          ? "Subscription Limit Reached"
+                          : "Already Ordered This Month"}
                       </button>
                     </div>
                   </div>
@@ -342,7 +415,17 @@ const OrderPage: React.FC = () => {
                     to your doorstep as part of your subscription. You chose it
                     because it speaks to your reading preferences!
                   </p>
+                  <p className="text-xs text-[#5D4037] font-serif mt-2">
+                    📅 Remember: You can choose 1 book per month (maximum 6
+                    books total for your 6-month subscription)
+                  </p>
                 </div>
+
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm font-serif">{error}</p>
+                  </div>
+                )}
 
                 <div className="flex space-x-3">
                   <button
