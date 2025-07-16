@@ -7,10 +7,9 @@ import React, {
 } from "react";
 import { Subscription, Order, Book, BookGenre } from "../types";
 import { mockGenres } from "../data/mockData";
-import { sendOrderEmail } from "../utils/emailService";
 import { GoogleBooksService } from "../services/googleBooksApi";
-import { GoogleSheetsService } from "../services/googleSheetsApi";
 import { useAuth } from "./AuthContext";
+import GoogleSheetsWebhookService from "../services/googleSheetsWebhookSimple";
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
@@ -58,21 +57,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [booksLoading, setBooksLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { accessToken, user } = useAuth();
+  const { user } = useAuth();
   const googleBooksService = GoogleBooksService.getInstance();
-  const googleSheetsService = GoogleSheetsService.getInstance();
-
-  // Update the sheets service with access token when it changes
-  useEffect(() => {
-    if (accessToken) {
-      googleSheetsService.setAccessToken(accessToken);
-    }
-  }, [accessToken, googleSheetsService]);
+  const googleSheetsService = GoogleSheetsWebhookService.getInstance();
 
   const loadOrdersByEmail = useCallback(
     async (userEmail: string) => {
       try {
-        console.log("Loading orders for user:", userEmail);
         const ordersFromSheets = await googleSheetsService.getOrdersByEmail(
           userEmail
         );
@@ -84,7 +75,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
             JSON.stringify(ordersFromSheets)
           );
         } else {
-          console.log("No orders found in Google Sheets for user:", userEmail);
           setOrders([]);
         }
       } catch (error) {
@@ -102,7 +92,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
   const loadSubscriptionByEmail = useCallback(
     async (userEmail: string) => {
       try {
-        console.log("Loading subscription for user:", userEmail);
         const subscriptionFromSheets =
           await googleSheetsService.getSubscriptionByEmail(userEmail);
 
@@ -113,10 +102,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
             JSON.stringify(subscriptionFromSheets)
           );
         } else {
-          console.log(
-            "No subscription found in Google Sheets for user:",
-            userEmail
-          );
           setSubscription(null);
         }
       } catch (error) {
@@ -230,7 +215,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
     giftMessage?: string
   ) => {
     if (loading) {
-      console.log("Subscription creation already in progress, skipping...");
       return;
     }
 
@@ -260,7 +244,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       // Save to Google Sheets
-      if (accessToken && user?.email) {
+      if (user?.email) {
         try {
           await googleSheetsService.saveSubscription(
             newSubscription,
@@ -283,7 +267,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const orderBook = async (book: Book, personalMessage?: string) => {
     if (loading) {
-      console.log("Order already in progress, skipping...");
       return;
     }
 
@@ -353,7 +336,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       // Save order to Google Sheets
-      if (accessToken && user?.email) {
+      if (user?.email) {
         try {
           await googleSheetsService.saveOrder(newOrder, user.email);
           await googleSheetsService.saveSubscription(
@@ -365,9 +348,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({
           // Don't throw error here - order was successful locally
         }
       }
-
-      // Send email notification
-      await sendOrderEmail(newOrder, user?.email || "");
     } catch (err) {
       console.error("Error ordering book:", err);
       setError(

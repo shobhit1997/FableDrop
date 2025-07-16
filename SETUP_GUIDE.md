@@ -23,7 +23,7 @@ The app works immediately in demo mode:
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing
-3. Note your project ID bookshop-465917
+3. Note your project ID
 
 ### Step 2: Enable APIs
 
@@ -42,7 +42,7 @@ In the Google Cloud Console:
 ### Step 3: Create API Keys
 
 1. Go to "APIs & Services" → "Credentials"
-2. Click "Create Credentials" → "API Key" AIzaSyAHt_lrCUFJ9209tWK5GovzY_qzRdrL5EI
+2. Click "Create Credentials" → "API Key"
 3. Copy the API key
 4. Click "Restrict Key" and limit to:
    - Books API
@@ -55,7 +55,7 @@ In the Google Cloud Console:
 1. Go to [Google Sheets](https://sheets.google.com)
 2. Create a new spreadsheet
 3. Name it "BookBox Orders" or similar
-4. Copy the Sheet ID from the URL: 18N_FP1rSFrJIJNMnh7o5p1YVf5O49stvrFc0-TlN9wo
+4. Copy the Sheet ID from the URL:
    ```
    https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit
    ```
@@ -169,7 +169,6 @@ The app simulates email notifications and logs them to:
 
 1. **Genres:** Modify `src/data/mockData.ts`
 2. **Welcome Messages:** Update `src/pages/DashboardPage.tsx`
-3. **Email Templates:** Customize `src/utils/emailService.ts`
 
 ### Shipping Information
 

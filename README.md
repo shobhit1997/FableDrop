@@ -116,7 +116,6 @@ Each order creates a row with:
 
 - Update colors in `tailwind.config.js`
 - Modify logo and branding in components
-- Customize email templates in `src/utils/emailService.ts`
 
 ### Book Selection
 
@@ -146,7 +145,6 @@ Each order creates a row with:
 - `SubscriptionContext`: Order and book management
 - `GoogleBooksService`: API integration for book data
 - `GoogleSheetsService`: Spreadsheet integration
-- `EmailService`: Order notifications
 
 ### File Structure
 
