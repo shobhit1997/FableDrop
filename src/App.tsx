@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import OrderPage from "./pages/OrderPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { logEnvironmentStatus } from "./utils/environmentCheck";
 
@@ -51,6 +52,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </div>

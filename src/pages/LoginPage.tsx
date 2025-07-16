@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
@@ -458,6 +458,14 @@ const LoginForm: React.FC = () => {
           <p className="text-gray-300 mb-4">
             Stories dropping at your doorstep
           </p>
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <Link
+              to="/privacy"
+              className="text-sm text-gray-400 hover:text-[#F4A261] transition-colors underline"
+            >
+              Privacy Policy
+            </Link>
+          </div>
           <p className="text-sm text-gray-400">
             © 2024 FableDrop. Crafted with love for book lovers.
           </p>
