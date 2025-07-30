@@ -23,7 +23,7 @@ const DashboardPage: React.FC = () => {
     try {
       await createSubscription(
         { genres: [], authors: [], themes: [] },
-        "Welcome to BookBox! Your literary adventure begins now!"
+        "Welcome to FableDrop! Your literary adventure begins now!"
       );
     } catch (error) {
       console.error("Failed to activate subscription:", error);
@@ -117,7 +117,7 @@ const DashboardPage: React.FC = () => {
                 Ready to Start Your Book Journey?
               </h3>
               <p className="text-[#5D4037] font-serif mb-6">
-                Click below to activate your BookBox subscription and start
+                Click below to activate your FableDrop subscription and start
                 ordering amazing books!
               </p>
               {error && (
