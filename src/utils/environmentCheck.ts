@@ -45,7 +45,7 @@ export const logEnvironmentStatus = () => {
   const status = checkEnvironment();
 
   console.log("\n" + "=".repeat(50));
-  console.log("📚 BOOKBOX ENVIRONMENT STATUS");
+  console.log("📚 FableDrop ENVIRONMENT STATUS");
   console.log("=".repeat(50));
   console.log(`Mode: ${status.messages.mode}`);
   console.log(`Books API: ${status.messages.booksApi}`);

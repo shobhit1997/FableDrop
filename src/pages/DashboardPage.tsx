@@ -11,10 +11,24 @@ const DashboardPage: React.FC = () => {
     canOrderThisMonth,
     getOrdersForCurrentMonth,
     getNextOrderDate,
+    createSubscription,
+    loading,
+    error,
   } = useSubscription();
   const navigate = useNavigate();
 
   const currentMonthOrders = getOrdersForCurrentMonth();
+
+  const handleActivateSubscription = async () => {
+    try {
+      await createSubscription(
+        { genres: [], authors: [], themes: [] },
+        "Welcome to BookBox! Your literary adventure begins now!"
+      );
+    } catch (error) {
+      console.error("Failed to activate subscription:", error);
+    }
+  };
   const nextOrderDate = getNextOrderDate();
 
   const handleOrderNow = () => {
@@ -103,15 +117,21 @@ const DashboardPage: React.FC = () => {
                 Ready to Start Your Book Journey?
               </h3>
               <p className="text-[#5D4037] font-serif mb-6">
-                Choose from our vast literary collection and create your
-                personal reading adventure!
+                Click below to activate your BookBox subscription and start
+                ordering amazing books!
               </p>
-              <Link
-                to="/subscription"
-                className="inline-block bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-[#F4A261]/30"
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
+              <button
+                onClick={handleActivateSubscription}
+                disabled={loading}
+                className="inline-block bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] text-[#F6F1EB] font-semibold py-3 px-6 rounded-lg hover:from-[#A0522D] hover:to-[#8B4513] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-[#F4A261]/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                Set Up Subscription
-              </Link>
+                {loading ? "Activating..." : "Activate Subscription"}
+              </button>
             </div>
           </div>
         ) : (
@@ -262,10 +282,10 @@ const DashboardPage: React.FC = () => {
                 )}
 
                 <Link
-                  to="/subscription"
+                  to="/order"
                   className="block w-full text-center py-2 px-4 rounded-lg bg-[#F4A261]/20 text-[#8B4513] hover:bg-[#F4A261]/30 transition-colors font-serif"
                 >
-                  🔍 Search Books
+                  🔍 Browse & Order Books
                 </Link>
 
                 <div className="pt-2 border-t border-[#F4A261]/30">

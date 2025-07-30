@@ -129,7 +129,7 @@ export class GoogleBooksService {
       const apiKey = process.env.REACT_APP_GOOGLE_BOOKS_API_KEY;
       const baseUrl = `${GOOGLE_BOOKS_API_BASE}/volumes?q=${encodeURIComponent(
         query
-      )}&maxResults=${maxResults}&printType=books&langRestrict=en`;
+      )}&maxResults=${40}&printType=books&langRestrict=en`;
 
       const url = apiKey ? `${baseUrl}&key=${apiKey}` : baseUrl;
 
@@ -149,6 +149,37 @@ export class GoogleBooksService {
 
       const data: GoogleBooksResponse = await response.json();
 
+      data.items = data.items
+        .filter(
+          (item) =>
+            item.volumeInfo.pageCount &&
+            item.volumeInfo.pageCount > 0 &&
+            item.volumeInfo.imageLinks &&
+            (item.volumeInfo.imageLinks.thumbnail ||
+              item.volumeInfo.imageLinks.large ||
+              item.volumeInfo.imageLinks.medium ||
+              item.volumeInfo.imageLinks.small)
+        )
+        .filter(
+          (book, index, self) =>
+            index ===
+            self.findIndex(
+              (b) =>
+                ((b.volumeInfo.title.toLowerCase() ===
+                  book.volumeInfo.title.toLowerCase() &&
+                  b.volumeInfo.authors?.join(", ")) ||
+                  "Unknown Author".toLowerCase()) ===
+                (book.volumeInfo.authors?.join(", ") ||
+                  "Unknown Author".toLowerCase())
+            )
+        )
+        .sort(
+          (a, b) =>
+            (a.volumeInfo.averageRating ? a.volumeInfo.averageRating : 0) -
+            (b.volumeInfo.averageRating ? b.volumeInfo.averageRating : 0)
+        )
+        .slice(0, maxResults);
+      data.totalItems = data.items.length;
       // Cache the response
       this.cache.set(cacheKey, data);
 
