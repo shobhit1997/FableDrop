@@ -1,30 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { useSubscription } from "../contexts/SubscriptionContext";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 // Create a separate component for the login form that uses the Google OAuth hook
 const LoginForm: React.FC = () => {
   const { login, isAuthenticated, loading, error } = useAuth();
-  const { createSubscription, subscription } = useSubscription();
   const navigate = useNavigate();
-  const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
-  const [showActivateButton, setShowActivateButton] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
-      // Check if user has a subscription
-      if (subscription) {
-        // User has subscription, redirect to dashboard
-        navigate("/dashboard");
-      } else {
-        // User doesn't have subscription, show activate button
-        setShowActivateButton(true);
-      }
+      // Redirect to dashboard after successful login
+      navigate("/dashboard");
     }
-  }, [isAuthenticated, subscription, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -64,58 +54,10 @@ const LoginForm: React.FC = () => {
       "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
   });
 
-  const handleActivateSubscription = async () => {
-    try {
-      setIsCreatingSubscription(true);
-      await createSubscription(
-        { genres: [], authors: [], themes: [] },
-        "Welcome to FableDrop! Your reading journey starts here."
-      );
-      // Will redirect to dashboard via useEffect when subscription is created
-    } catch (error) {
-      console.error("Failed to create subscription:", error);
-    } finally {
-      setIsCreatingSubscription(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="large" text="Loading..." />
-      </div>
-    );
-  }
-
-  if (showActivateButton) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="text-6xl mb-6">🎉</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Welcome to FableDrop!
-            </h1>
-            <p className="text-gray-600 mb-8">
-              You're all set! Click below to activate your book subscription and
-              start discovering amazing books.
-            </p>
-            <button
-              onClick={handleActivateSubscription}
-              disabled={isCreatingSubscription}
-              className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-4 px-6 rounded-lg font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isCreatingSubscription ? (
-                <div className="flex items-center justify-center">
-                  <LoadingSpinner size="small" color="white" />
-                  <span className="ml-2">Activating...</span>
-                </div>
-              ) : (
-                "Activate Subscription"
-              )}
-            </button>
-          </div>
-        </div>
       </div>
     );
   }
