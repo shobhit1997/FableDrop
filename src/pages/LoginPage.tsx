@@ -19,7 +19,7 @@ const LoginForm: React.FC = () => {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        console.log("Google login success:", tokenResponse);
+        console.log("Google login success");
 
         // Get user info using the access token
         const response = await fetch(

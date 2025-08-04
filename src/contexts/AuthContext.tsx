@@ -119,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setAccessToken(null);
     localStorage.removeItem("fabledrop_user");
     localStorage.removeItem("fabledrop_access_token");
+    localStorage.clear();
     setError(null);
   };
 
